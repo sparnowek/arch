@@ -1,75 +1,70 @@
 #!/usr/bin/env bash
 set -e
 
-echo "|-------------------------------|"
-echo "| Arch Linux Installation Script |"
-echo "|-------------------------------|"
+echo "|-----------------------------|"
+echo "|- Arch Linux install script -|"
+echo "|-----------------------------|"
 
-echo "| Step 1: Sync Pacman |"
+echo "| Sync Pacman |"
 pacman -Syy --noconfirm
-
 echo
-echo "| Step 2: Partition Disks |"
-echo "Use fdisk/cfdisk now."
+echo "| Partition disks |"
+echo "Use fdisk/cfdisk now"
 echo "EFI  : 1G  (EFI System)"
 echo "ROOT : Rest (Linux filesystem)"
 echo "SWAP : RAM size or ~8G"
+
 echo
 read -p "Press ENTER when partitions are ready..."
 
 echo
-echo "Enter EFI partition (e.g. /dev/sda1)"
+echo "Enter EFI partition (example: /dev/sda1)"
 read EFI
-
-echo "Enter ROOT partition (e.g. /dev/sda2)"
+echo "Enter ROOT partition (example: /dev/sda2)"
 read ROOT
-
-echo "Enter SWAP partition (e.g. /dev/sda3)"
+echo "Enter SWAP partition (example: /dev/sda3)"
 read SWAP
 
 echo
-echo "| Step 3: Create filesystems |"
+echo "| Create filesystems |"
 mkfs.fat -F32 "${EFI}"
 mkfs.ext4 "${ROOT}"
 mkswap "${SWAP}"
 swapon "${SWAP}"
 
 echo
-echo "| Step 4: Mount partitions |"
+echo "| Mount partitions |"
+mkdir /mnt
 mount "${ROOT}" /mnt
 mkdir -p /mnt/boot/efi
 mount "${EFI}" /mnt/boot/efi
 
 echo
-echo "| Step 5: Install base system |"
+echo "| Install base system |"
 pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware sudo nano --noconfirm
 
 genfstab -U -p /mnt > /mnt/etc/fstab
 
 echo
-echo "| Step 6: User configuration |"
+echo "| User configuration |"
 echo "Enter hostname:"
 read HOSTNAME
-
 echo "Enter username:"
 read USERNAME
-
+echo "Enter user password:"
+read -s USERPASS
 echo "Enter root password:"
 read -s ROOTPASS
 echo
 
-echo "Enter user password:"
-read -s USERPASS
 echo
-
-echo
-echo "Choose Desktop Environment"
-echo "1 KDE (SDDM)"
-echo "2 GNOME (GDM)"
+echo "Choose desktop environment"
+echo "1 KDE (sddm)"
+echo "2 GNOME (gdm)"
 echo "3 No Desktop"
 read DE
 
-cat <<EOF > /mnt/install_chroot.sh
+cat <<INSTALL > /mnt/install_chroot.sh
 #!/usr/bin/env bash
 set -e
 
@@ -118,14 +113,16 @@ else
 fi
 
 echo "| Done |"
-EOF
+INSTALL
 
 chmod +x /mnt/install_chroot.sh
 arch-chroot /mnt /install_chroot.sh
 
 echo
-echo "| Installation finished |"
+echo "| Finish |"
 echo "Unmounting and rebooting..."
-umount -R /mnt
-swapoff "${SWAP}"
+
+exit
+umount /mnt
+unmount /mnt/boot/efi
 reboot
