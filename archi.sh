@@ -11,8 +11,8 @@ echo
 echo "| Partition disks |"
 echo "Use fdisk/cfdisk now"
 echo "EFI  : 1G  (EFI System)"
+echo "SWAP : RAM size or about 8G"
 echo "ROOT : Rest (Linux filesystem)"
-echo "SWAP : RAM size or ~8G"
 
 echo
 read -p "Press ENTER when partitions are ready..."
@@ -20,10 +20,10 @@ read -p "Press ENTER when partitions are ready..."
 echo
 echo "Enter EFI partition (example: /dev/sda1)"
 read EFI
-echo "Enter ROOT partition (example: /dev/sda2)"
-read ROOT
-echo "Enter SWAP partition (example: /dev/sda3)"
+echo "Enter SWAP partition (example: /dev/sda2)"
 read SWAP
+echo "Enter ROOT partition (example: /dev/sda3)"
+read ROOT
 
 echo
 echo "| Create filesystems |"
