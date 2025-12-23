@@ -29,7 +29,7 @@ read SWAP
 echo "Enter ROOT (ex: /dev/sda3)"
 read ROOT
 
-# Validate partitions
+echo
 for part in "$EFI" "$ROOT" "$SWAP"; do
   if [[ ! -b $part ]]; then
     echo "Error: Partition $part does not exist"
@@ -48,7 +48,9 @@ swapoff -a 2>/dev/null || true
 umount -R /mnt 2>/dev/null || true
 rm -rf /mnt
 
+echo
 echo "| Adding mount directory |"
+mkdir /mnt
 mkdir -p /mnt/boot/efi
 
 echo
