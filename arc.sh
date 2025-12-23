@@ -10,11 +10,16 @@ echo "|-----------------------------|"
 echo "|- Arch Linux install script -|"
 echo "|-----------------------------|"
 
-echo "| Sync Pacman |"
+echo 
+echo "|-------------------|"
+echo "|- Synchronization -|"
+echo "|-------------------|"
 pacman -Syy --noconfirm
 
 echo
-echo "| Partition disks |"
+echo "|----------------|"
+echo "|- Partitioning -|"
+echo "|----------------|"
 echo "Use fdisk/cfdisk now"
 echo "EFI  : 1G  (EFI System)"
 echo "SWAP : RAM size or about 8G"
@@ -44,27 +49,42 @@ if ! ping -c 1 archlinux.org >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "| Cleaning old mount and directories |"
+echo 
+echo "|------------|"
+echo "|- Umouning -|"
+echo "|------------|"
 swapoff -a 2>/dev/null || true
 umount -R /mnt 2>/dev/null || true
 
-echo "| Creating filesystems |"
+echo 
+echo "|---------------|"
+echo "|- Filesystems -|"
+echo "|---------------|"
 mkfs.fat -F32 "${EFI}"
 mkfs.ext4 -F "${ROOT}"
 mkswap "${SWAP}"
 swapon "${SWAP}"
 
-echo "| Mount partitions |"
+echo 
+echo "|------------|"
+echo "|- Mounting -|"
+echo "|------------|"
 mount "${ROOT}" /mnt
 mkdir -p /mnt/boot/efi  # Must happen AFTER mounting /mnt
 mount "${EFI}" /mnt/boot/efi
 
-echo "| Install base system |"
+echo 
+echo "|--------|"
+echo "|- Base -|"
+echo "|--------|"
 pacstrap /mnt base base-devel linux-lts linux-lts-headers linux-firmware sudo nano --noconfirm
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-echo "| User configuration |"
+echo 
+echo "|--------|"
+echo "|- User -|"
+echo "|--------|"
 read -p "Hostname: " HOSTNAME
 read -p "Username: " USERNAME
 read -s -p "User password: " USERPASS
@@ -72,13 +92,23 @@ echo
 read -s -p "Root password: " ROOTPASS
 echo
 
-echo "Choose desktop environment: 1) KDE, 2) GNOME, 3) None"
+echo "Choose desktop environment:"
+echo "1. KDE"
+echo "2. GNOME" 
+echo "3. None"
 read DE
 
-echo "Default Shell: 1) Bash, 2) Zsh, 3) Nushell"
+echo
+echo "Default Shell:"
+echo "1. Bash"
+echo "2. Zsh" 
+echo "3. Nushell"
 read SHELL_INPUT
 
-echo "GRUB bootmenu: 1) No menu (0s), 2) Standard menu"
+echo
+echo "GRUB bootmenu:"
+echo "1. No Menu"
+echo "2. Menu"
 read GRUB_CHOICE
 
 # We use 'INSTALL' in quotes to prevent the host shell from expanding variables too early
@@ -86,14 +116,20 @@ cat <<INSTALL > /mnt/install_chroot.sh
 #!/usr/bin/env bash
 set -e
 
-echo "| Locale & Time |"
+echo 
+echo "|---------|"
+echo "|- Clock -|"
+echo "|---------|"
 sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 hwclock --systohc
 
-echo "| Hostname |"
+echo 
+echo "|--------|"
+echo "|- Host -|"
+echo "|--------|"
 echo "${HOSTNAME}" > /etc/hostname
 cat <<HOSTS > /etc/hosts
 127.0.0.1   localhost
@@ -101,13 +137,19 @@ cat <<HOSTS > /etc/hosts
 127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
 HOSTS
 
-echo "| Users |"
+echo 
+echo "|------------------|"
+echo "|- Administration -|"
+echo "|------------------|"
 echo "root:${ROOTPASS}" | chpasswd
 useradd -m -G wheel,storage,power,audio,video -s /bin/bash ${USERNAME}
 echo "${USERNAME}:${USERPASS}" | chpasswd
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-echo "| Xtra shells |"
+echo 
+echo "|----------|"
+echo "|- Shells -|"
+echo "|----------|"
 pacman -S --noconfirm zsh nushell
 # Add Nushell to /etc/shells so chsh accepts it
 echo "/usr/bin/nu" >> /etc/shells
@@ -118,11 +160,17 @@ elif [[ "$SHELL_INPUT" == "3" ]]; then
     chsh -s /usr/bin/nu ${USERNAME}
 fi
 
-echo "| Network |"
+echo 
+echo "|--------------|"
+echo "|- Networking -|"
+echo "|--------------|"
 pacman -S networkmanager --noconfirm
 systemctl enable NetworkManager
 
-echo "| Bootloader |"
+echo 
+echo "|--------|"
+echo "|- Boot -|"
+echo "|--------|"
 pacman -S grub efibootmgr --noconfirm
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 if [[ "$GRUB_CHOICE" == "1" ]]; then
@@ -130,7 +178,10 @@ if [[ "$GRUB_CHOICE" == "1" ]]; then
 fi
 grub-mkconfig -o /boot/grub/grub.cfg
 
-echo "| Desktop |"
+echo 
+echo "|-----------|"
+echo "|- Desktop -|"
+echo "|-----------|"
 if [[ "${DE}" == "1" ]]; then
   pacman -S xorg plasma sddm konsole dolphin --noconfirm
   systemctl enable sddm
@@ -139,7 +190,10 @@ elif [[ "${DE}" == "2" ]]; then
   systemctl enable gdm
 fi
 
-echo "| ARCHroot Done |"
+echo 
+echo "|----------------|"
+echo "|- Install Done -|"
+echo "|----------------|"
 INSTALL
 
 chmod +x /mnt/install_chroot.sh
@@ -148,4 +202,8 @@ arch-chroot /mnt /bin/bash /install_chroot.sh
 rm /mnt/install_chroot.sh
 umount -R /mnt
 
-echo "Finished! Reboot now."
+echo 
+echo "|--------------|"
+echo "|-  Finished  -|"
+echo "|-  Have fun! -|"
+echo "|--------------|"
