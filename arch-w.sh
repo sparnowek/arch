@@ -64,6 +64,7 @@ swapon "${SWAP}"
 echo
 echo "| Mount partitions |"
 mount "${ROOT}" /mnt
+mkdir -p /mnt/boot/efi
 mount "${EFI}" /mnt/boot/efi
 
 echo
