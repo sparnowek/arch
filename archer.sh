@@ -51,7 +51,8 @@ rm -rf /mnt
 echo
 echo "| Adding mount directory |"
 mkdir /mnt
-mkdir -p /mnt/boot/efi
+mkdir /mnt/boot
+mkdir /mnt/boot/efi
 
 echo
 echo "| Creating filesystems |"
